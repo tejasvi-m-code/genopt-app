@@ -288,9 +288,9 @@ import os
 
 MODEL_ENDPOINTS = {
     "FAB-GPT-Pro": "https://xmy6yovg6aaq4db7brijnsww6q0phnvv.lambda-url.us-east-1.on.aws/agent/fab-gpt-pro/execute",
-    "FAB-Codex": "https://xmy6yovg6aaq4db7brijnsww6q0phnvv.lambda-url.us-east-1.on.aws/agent/fab-codex/execute",
-    "FAB-Azure": "https://xmy6yovg6aaq4db7brijnsww6q0phnvv.lambda-url.us-east-1.on.aws/agent/fab-azure/execute",
-    "FAB-GoogleAI": "https://xmy6yovg6aaq4db7brijnsww6q0phnvv.lambda-url.us-east-1.on.aws/agent/fab-googleai/execute"
+    "FAB-nova-lite": "https://xmy6yovg6aaq4db7brijnsww6q0phnvv.lambda-url.us-east-1.on.aws/agent/nova-lite/execute",
+    "FAB-claude-sonnet": "https://xmy6yovg6aaq4db7brijnsww6q0phnvv.lambda-url.us-east-1.on.aws/agent/claude-sonnet/execute",
+    "FAB-geminipro": "https://xmy6yovg6aaq4db7brijnsww6q0phnvv.lambda-url.us-east-1.on.aws/agent/geminipro/execute"
 }
 
 FAB_HEADERS = {
@@ -319,9 +319,9 @@ LANGUAGE_MAP = {
 
 MODELS = [
     "FAB-GPT-Pro",
-    "FAB-Codex",
-    "FAB-Azure",
-    "FAB-GoogleAI"
+    "FAB-Nova-lite",
+    "FAB-Claude",
+    "FAB-GeminiPro"
 ]
 
 st.set_page_config(page_title="FAB Code Assistant", layout="wide")
@@ -329,22 +329,16 @@ st.title("FAB Code Generation & Optimization Assistant")
 
 st.sidebar.header("Settings")
 model_choice = st.sidebar.radio("Choose AI Model:", MODELS)
-language_choice = st.sidebar.selectbox("Select Programming Language:", LANGUAGES)
+language_choice = st.sidebar.selectbox("Choose a programming language:", LANGUAGES)
 syntax_lang = LANGUAGE_MAP[language_choice]
 FAB_API_ENDPOINT = MODEL_ENDPOINTS[model_choice]
 
-def unescape_code(text):
-    try:
-        return text.encode('utf-8').decode('unicode_escape')
-    except Exception:
-        return text  # fallback if decoding fails
-
 st.subheader("Code Generation via Prompt")
-user_prompt = st.text_area("Enter your prompt:", height=150)
+user_prompt = st.text_area("What do you want the code to do?", height=150)
 
-if st.button("Generate Code"):
+if st.button("Generate Code", key="generate_button"):
     if user_prompt:
-        full_prompt = f"Write {language_choice} code for the following task:\n\n{user_prompt}"
+        full_prompt = f"Write {language_choice} code to:\n\n{user_prompt}"
         with st.spinner("Generating code from FAB Agent..."):
             try:
                 response = requests.post(
@@ -354,7 +348,7 @@ if st.button("Generate Code"):
                 )
                 response.raise_for_status()
                 code_output = response.json().get("output", "No code returned.")
-                code_output = unescape_code(code_output)
+
                 st.text_area("Generated Code", code_output, height=300)
 
                 st.download_button(
@@ -372,23 +366,34 @@ st.subheader("Optimize Uploaded Code")
 uploaded_file = st.file_uploader("Upload code file to optimize", type=["py", "js", "txt", "java", "cs"])
 file_content = uploaded_file.read().decode("utf-8") if uploaded_file else ""
 
-if st.button("Optimize Code") and uploaded_file:
-    optimize_prompt = (
-        f"Optimize this {language_choice} code for the fastest possible execution while maintaining identical output. "
-        f"Focus on performance improvements, algorithmic optimizations, and language-specific best practices. "
-        f"Respond only with code; do not explain your work.\n\n{file_content}"
-    )
+# use or replace
+FAB_OPTIMIZE_ENDPOINT = 'https://xmy6yovg6aaq4db7brijnsww6q0phnvv.lambda-url.us-east-1.on.aws/agent/violet-iapetus/execute'
+
+if st.button("Optimize Code", key="optimize_button") and uploaded_file:
+    optimize_prompt = f"""
+You are an expert {language_choice} developer. Your task is to optimize the given code snippet to achieve the best possible performance without changing its behavior or output.
+
+- Focus on improving algorithmic efficiency.
+- Apply language-specific best practices and idioms.
+- Minimize memory usage and runtime.
+- Remove redundant or unnecessary code.
+- Do NOT add comments or explanations, only provide the optimized code.
+
+Code to optimize:
+
+{file_content}
+    """
 
     with st.spinner("Optimizing code via FAB Agent..."):
         try:
             response = requests.post(
-                FAB_API_ENDPOINT,
+                FAB_OPTIMIZE_ENDPOINT,
                 headers=FAB_HEADERS,
                 json={"input": {"query": optimize_prompt}}
             )
             response.raise_for_status()
             optimized_code = response.json().get("output", "No optimized code returned.")
-            optimized_code = unescape_code(optimized_code)
+
             st.text_area("Optimized Code", optimized_code, height=300)
 
             st.download_button(
@@ -399,13 +404,15 @@ if st.button("Optimize Code") and uploaded_file:
             )
         except Exception as e:
             st.error(f"Error: {e}")
+elif uploaded_file:
+    st.info("Click 'Optimize Code' to optimize the uploaded code.")
 
 st.subheader("Code Conversion")
 conversion_target = st.selectbox("Convert code to: (Target Language)", LANGUAGES)
 conversion_syntax = LANGUAGE_MAP[conversion_target]
 
 if uploaded_file:
-    if st.button("Convert Code"):
+    if st.button("Convert Code", key="convert_button"):
         conversion_prompt = (
             f"Convert the following {language_choice} code into {conversion_target}. "
             f"Only respond with equivalent, runnable code. Do not explain your work.\n\n{file_content}"
@@ -420,7 +427,7 @@ if uploaded_file:
                 )
                 response.raise_for_status()
                 converted_code = response.json().get("output", "No converted code returned.")
-                converted_code = unescape_code(converted_code)
+
                 st.text_area("Converted Code", converted_code, height=300)
 
                 st.download_button(
@@ -433,3 +440,5 @@ if uploaded_file:
                 st.error(f"Error: {e}")
 else:
     st.warning("Please upload a code file to convert.")
+
+
