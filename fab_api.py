@@ -11,8 +11,8 @@ FAB_ENDPOINTS = {
 FAB_OPTIMIZE_ENDPOINT = "https://xmy6yovg6aaq4db7brijnsww6q0phnvv.lambda-url.us-east-1.on.aws/agent/violet-iapetus/execute"
 
 # Replace these with your actual credentials
-USER_ID = "<your_user_id>"
-API_KEY = "<your_api_key>"
+USER_ID = "tejasvi-poc"
+API_KEY = "D8762AA1BA98FB28EEE6EA45:2a33da34fa1e9a863aed86153e77a2a7"
 
 # Session for performance
 session = requests.Session()
