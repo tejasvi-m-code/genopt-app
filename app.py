@@ -5,8 +5,8 @@ import os
 FAB_API_ENDPOINT = "https://xmy6yovg6aaq4db7brijnsww6q0phnvv.lambda-url.us-east-1.on.aws/agent/test-01/execute"
 FAB_HEADERS = {
     'content-type': 'application/json',
-    'x-user-id': '<your_user_id>',
-    'x-authentication': 'api-key <your_api_key>'
+    'x-user-id': 'tejasvi-poc',
+    'x-authentication': 'api-key D8762AA1BA98FB28EEE6EA45:2a33da34fa1e9a863aed86153e77a2a7'
 }
 
 LANGUAGES = [
